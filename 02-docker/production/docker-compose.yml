@@ -12,8 +12,6 @@
 # Stop:  docker compose down
 # ============================================================
 
-version: "3.9"
-
 services:
 
   # ──────────────────────────────────────
@@ -21,23 +19,25 @@ services:
   # ──────────────────────────────────────
   agent:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..            # project root để Dockerfile COPY paths đúng
+      dockerfile: 02-docker/production/Dockerfile
       target: runtime          # chỉ build stage "runtime", không build "builder"
     environment:
       - ENVIRONMENT=staging
       - PORT=8000
       - REDIS_URL=redis://redis:6379/0
       - QDRANT_URL=http://qdrant:6333
-      # ❌ KHÔNG đặt secrets trực tiếp ở đây trong production
-      # ✅ Dùng: docker secret hoặc env file ngoài git
+      # Defaults cho dev/demo; production override qua env_file hoặc docker secret
+      - AGENT_API_KEY=${AGENT_API_KEY:-dev-key-change-me}
+      - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret}
     env_file:
-      - .env.local              # secrets riêng, trong .gitignore
+      - path: .env.local        # secrets riêng, trong .gitignore
+        required: false
     depends_on:
       redis:
         condition: service_healthy
       qdrant:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
       test: ["CMD", "python", "-c",
              "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
@@ -73,11 +73,7 @@ services:
     image: qdrant/qdrant:v1.9.0
     volumes:
       - qdrant_data:/qdrant/storage
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
+    # Qdrant image không có curl/wget — dùng service_started trong depends_on thay vì healthcheck
     networks:
       - internal
 

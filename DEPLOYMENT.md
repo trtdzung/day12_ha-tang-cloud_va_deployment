@@ -25,6 +25,22 @@
 
 ---
 
+## Demo API Key (dùng cho grader chấm Lab 12)
+
+UI `https://lab12.hvan.it.com` **không cần key** (same-origin tự bypass).
+Chỉ external test tools (curl/Postman) cần key:
+
+```
+AGENT_API_KEY=1e93a43bffdd1906cd5828943dd79b5ef5e99350103bcde32b34011f75ee945b
+```
+
+Bảo vệ bởi:
+- Rate-limit 10 req/min/bucket
+- Cost guard **$0.5 / tháng / bucket** (dễ trigger 402 khi test)
+- Key rotate tự động sau deadline (17/4/2026) bằng `gh secret set`
+
+---
+
 ## Test Commands
 
 ### 1. Health Check
@@ -64,12 +80,15 @@ curl -X POST https://lab12.hvan.it.com/api/chat \
 ### 4. API Test — With Valid Key
 
 ```bash
-export API_KEY="<agent-api-key-từ-gh-secrets>"
+export API_KEY="1e93a43bffdd1906cd5828943dd79b5ef5e99350103bcde32b34011f75ee945b"
 
 curl -X POST https://lab12.hvan.it.com/api/chat \
   -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"messages":[{"role":"user","content":"Xin chào"}],"userId":"demo"}'
+  -d '{"messages":[{"role":"user","content":"Xin chào, tôi cần đặt lịch khám"}],"userId":"user-an"}'
+# → Streaming response từ LLM
+
+# userId có sẵn trong seed: user-an, user-binh, user-cuong
 ```
 
 Expected:
@@ -100,7 +119,23 @@ done
 
 ```bash
 curl -H "X-API-Key: $API_KEY" https://lab12.hvan.it.com/api/metrics
-# → {"month":"2026-04","monthlyBudget":10,"keys":[...]}
+# → {"month":"2026-04","monthlyBudget":0.5,"keys":[{"key":"1e93a43b","spentUsd":0.0034}]}
+```
+
+### 7. Cost Guard demo (spam → 402 Payment Required)
+
+```bash
+# Gửi ~600 requests (chờ rate-limit reset giữa batch) → tổng > $0.5
+for batch in {1..60}; do
+  for i in {1..10}; do
+    curl -s -o /dev/null -w "batch $batch req $i: %{http_code}\n" \
+      -X POST https://lab12.hvan.it.com/api/chat \
+      -H "X-API-Key: $API_KEY" -H "Content-Type: application/json" \
+      -d '{"messages":[{"role":"user","content":"ping"}],"userId":"stress"}'
+  done
+  sleep 61  # đợi rate-limit window reset
+done
+# Sau khi chi vượt $0.5: HTTP 402 {"error":"Monthly budget exceeded ($0.5)..."}
 ```
 
 ---
@@ -115,8 +150,8 @@ curl -H "X-API-Key: $API_KEY" https://lab12.hvan.it.com/api/metrics
 | `APP_VERSION` | `1.0.0` | |
 | `AGENT_API_KEY` | *(32-byte hex, gen by `openssl rand -hex 32`)* | Secret |
 | `JWT_SECRET` | *(32-byte hex)* | Secret |
-| `RATE_LIMIT_PER_MINUTE` | `20` | |
-| `DAILY_BUDGET_USD` | `10.0` | |
+| `RATE_LIMIT_PER_MINUTE` | `10` | |
+| `MONTHLY_BUDGET_USD` | `0.5` | Giảm xuống để grader có thể trigger 402 |
 | `OPENAI_API_KEY` | *(empty → mock LLM)* | Optional |
 | `ALLOWED_ORIGINS` | `https://<frontend-domain>` | CORS |
 
