@@ -1,11 +1,11 @@
 # Day 12 Lab — Mission Answers (1)
 
 > **Project:** `06-lab-complete/` — Python/FastAPI sample
-> **Deployment doc:** [`DEPLOYMENT1.md`](./DEPLOYMENT1.md)
-> **Live URL:** https://day12-agent-production-a0dc.up.railway.app
+> **Deployment doc:** [`DEPLOYMENT.md`](./DEPLOYMENT.md)
+> **Live URL:** https://your-agent.railway.app
 >
-> **Student:** Ngô Hải Văn
-> **Student ID:** 2A202600386
+> **Student:** Trần Tiến Dũng
+> **Student ID:** 2A202600314
 > **Date:** 2026-04-17
 
 ---
@@ -95,8 +95,8 @@ Services communicate qua Docker internal network dùng service name làm DNS (`r
 
 Sample `06-lab-complete/` deployed thành công lên Railway:
 
-- **URL:** https://day12-agent-production-a0dc.up.railway.app
-- **Swagger docs:** https://day12-agent-production-a0dc.up.railway.app/docs
+- **URL:** https://your-agent.railway.app
+- **Swagger docs:** https://your-agent.railway.app/docs
 - **Redis:** Railway-managed add-on, linked qua `REDIS_URL=${{Redis.REDIS_URL}}`
 - **CI/CD:** `.github/workflows/deploy-railway.yml` — push `main` → auto deploy (~1m24s)
 
@@ -115,7 +115,7 @@ EXPOSE_DOCS               true
 
 **Test live:**
 ```bash
-BASE=https://day12-agent-production-a0dc.up.railway.app
+BASE=https://your-agent.railway.app
 
 curl $BASE/health
 # → {"status":"ok","storage":"redis","redis_connected":true,...}
@@ -232,7 +232,7 @@ Key insights:
 - Cả **per-user** và **global** budget → tránh 1 user drain hết tiền cả service
 - **Check trước khi call LLM** (estimated cost) + **record sau khi có response** (actual cost). Chấp nhận sai lệch nhỏ vì không pre-commit được token count chính xác.
 
-### Checkpoint 4 — ✅ hoàn thành
+### Checkpoint 4 — 
 
 ---
 
@@ -386,8 +386,4 @@ cd 06-lab-complete && python3 check_production_ready.py
 - ✅ Structured JSON logging
 - ✅ `railway.toml` + `render.yaml` deploy configs
 
-**Live:** https://day12-agent-production-a0dc.up.railway.app (push `main` → auto redeploy).
-
-Chi tiết deploy xem [`DEPLOYMENT1.md`](./DEPLOYMENT1.md).
-
-Dự án chính (Vinmec AI Agent trên VPS) xem [`MISSION_ANSWERS2.md`](./MISSION_ANSWERS2.md) + [`DEPLOYMENT2.md`](./DEPLOYMENT2.md).
+**Live:** https://your-agent.railway.app (push `main` → auto redeploy).

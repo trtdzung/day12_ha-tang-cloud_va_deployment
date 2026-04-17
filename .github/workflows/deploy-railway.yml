@@ -20,7 +20,9 @@ jobs:
         working-directory: 06-lab-complete
 
     env:
-      RAILWAY_URL: https://day12-agent-production-a0dc.up.railway.app
+      # TODO: Thay bằng URL thật của bạn sau khi deploy thành công lần đầu
+      RAILWAY_URL: https://your-agent.railway.app
+      # TODO: Kiểm tra chính xác Service Name trên dashboard Railway của bạn
       RAILWAY_SERVICE: day12-agent
 
     steps:

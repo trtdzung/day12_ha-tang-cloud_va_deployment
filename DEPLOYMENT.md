@@ -1,21 +1,18 @@
 # Deployment 1 — `06-lab-complete/` (Python/FastAPI sample)
 
-> **Student:** Ngô Hải Văn (2A202600386)
+> **Student:** Trần Tiến Dũng -2A202600314
 > **Date:** 2026-04-17
 > **Code:** [`./06-lab-complete/`](./06-lab-complete)
-
-Dự án Python FastAPI mẫu đi kèm bài giảng Lab 12 — reference implementation
-tuân thủ đầy đủ 11 items trong production readiness checklist.
 
 ---
 
 ## Tổng quan
 
-Agent FastAPI đơn giản dùng **mock LLM** (không cần OpenAI API key), chạy
+Agent FastAPI đơn giản dùng mock LLM (không cần OpenAI API key), chạy
 standalone bằng `docker compose up`. 
 **Stack:**
 - Python 3.11 + FastAPI + uvicorn
-- **Redis-backed state** (sliding-window rate limit, INCRBYFLOAT cost guard, conversation history per user)
+- Redis-backed state (sliding-window rate limit, INCRBYFLOAT cost guard, conversation history per user)
 - Dockerfile multi-stage → image 272 MB
 - Config options sẵn sàng deploy Railway hoặc Render
 
@@ -23,8 +20,8 @@ standalone bằng `docker compose up`.
 
 ## Live deploy (Railway)
 
-- **Public URL:** https://day12-agent-production-a0dc.up.railway.app
-- **Swagger UI:** https://day12-agent-production-a0dc.up.railway.app/docs
+- **Public URL:** https://your-agent.railway.app
+- **Swagger UI:** https://your-agent.railway.app/docs
 - **Redis:** Railway-managed instance, linked vào `day12-agent` service qua `REDIS_URL=${{Redis.REDIS_URL}}`
 - **LLM:** OpenAI `gpt-4o-mini` thật (không còn mock) — `OPENAI_API_KEY` set server-side, grader không cần
 - **CI/CD:** GitHub Actions `.github/workflows/deploy-railway.yml` — push `main` → auto deploy + smoke test (~1m)
@@ -37,12 +34,12 @@ Key dưới đây để test `/ask`, `/metrics`, `/history/{user_id}` qua curl/P
 Các endpoint public (`/health`, `/ready`, `/docs`) không cần key.
 
 ```
-AGENT_API_KEY=c85d2c73ad1906cd5828943dd79b5ef5e99350103bcde32b34011f75ee945bc0
+AGENT_API_KEY=your-api-key-here
 ```
 
 Cách dùng với Swagger UI:
-1. Mở https://day12-agent-production-a0dc.up.railway.app/docs
-2. Click nút **🔒 Authorize** ở góc phải
+1. Mở https://your-agent.railway.app/docs
+2. Click nút **Authorize** ở góc phải
 3. Paste key vào ô `ApiKeyHeader (X-API-Key)` → **Authorize** → **Close**
 4. Click "Try it out" trên `POST /ask` hoặc `GET /metrics` → điền body → **Execute**
 
@@ -117,8 +114,8 @@ Tham khảo `03-cloud-deployment/production-cloud-run/` để biết
 ## Test commands
 
 ```bash
-BASE=https://day12-agent-production-a0dc.up.railway.app
-API_KEY=c85d2c73ad1906cd5828943dd79b5ef5e99350103bcde32b34011f75ee945bc0
+BASE=https://your-agent.railway.app
+API_KEY=your-secret-key-here
 
 # 1. Health — phải thấy storage=redis, redis_connected=true
 curl $BASE/health
@@ -184,7 +181,7 @@ cd 06-lab-complete
 python3 check_production_ready.py
 ```
 
-Result: **20/20 checks passed (100%) 🎉 PRODUCTION READY**
+Result: **20/20 checks passed**
 
 - ✅ Dockerfile multi-stage + non-root + `HEALTHCHECK` + slim base
 - ✅ `.dockerignore` covers `.env`, `__pycache__`
@@ -202,8 +199,4 @@ Result: **20/20 checks passed (100%) 🎉 PRODUCTION READY**
 
 ## Sample này đã deploy thật
 
-URL public: https://day12-agent-production-a0dc.up.railway.app (kèm Swagger `/docs`).
-CI/CD qua GitHub Actions auto deploy mỗi lần push `main`. Xem run:
-https://github.com/hvan128/2A202600386_NgoHaiVan_LAB12/actions
-
-Dự án chính (**Vinmec AI Agent** — UI + Postgres + streaming LLM thật) xem tiếp `DEPLOYMENT2.md`.
+URL public: https://your-agent.railway.app (kèm Swagger `/docs`).
