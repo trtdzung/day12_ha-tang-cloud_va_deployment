@@ -20,6 +20,7 @@ build/
 venv/
 env/
 .venv/
+.venv*/
 
 # ── IDE ──────────────────────────────��────────────────────
 .vscode/
@@ -34,3 +35,6 @@ Thumbs.db
 # ── Docker volumes (local dev) ─────────────────────��──────
 data/
 volumes/
+
+# Local-only secret cache — never commit
+.lab12_secrets.local

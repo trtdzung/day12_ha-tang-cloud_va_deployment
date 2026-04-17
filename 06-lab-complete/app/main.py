@@ -124,8 +124,9 @@ app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
     lifespan=lifespan,
-    docs_url="/docs" if settings.environment != "production" else None,
-    redoc_url=None,
+    docs_url="/docs" if (settings.environment != "production" or settings.expose_docs) else None,
+    redoc_url="/redoc" if (settings.environment != "production" or settings.expose_docs) else None,
+    openapi_url="/openapi.json" if (settings.environment != "production" or settings.expose_docs) else None,
 )
 
 app.add_middleware(
@@ -145,7 +146,8 @@ async def request_middleware(request: Request, call_next):
         # Security headers
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
-        response.headers.pop("server", None)
+        if "server" in response.headers:
+            del response.headers["server"]
         duration = round((time.time() - start) * 1000, 1)
         logger.info(json.dumps({
             "event": "request",

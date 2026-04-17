@@ -40,6 +40,11 @@ class Settings:
     # Storage
     redis_url: str = field(default_factory=lambda: os.getenv("REDIS_URL", ""))
 
+    # Docs (Swagger UI) — cho phép bật ở production để demo/grading
+    expose_docs: bool = field(
+        default_factory=lambda: os.getenv("EXPOSE_DOCS", "false").lower() == "true"
+    )
+
     def validate(self):
         logger = logging.getLogger(__name__)
         if self.environment == "production":
