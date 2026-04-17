@@ -53,7 +53,7 @@ class Settings:
             if self.jwt_secret == "dev-jwt-secret":
                 raise ValueError("JWT_SECRET must be set in production!")
         if not self.openai_api_key:
-            logger.warning("OPENAI_API_KEY not set — using mock LLM")
+            logger.warning("OPENAI_API_KEY not set — /ask will fail until key is provided")
         return self
 
 

@@ -32,7 +32,7 @@ import uvicorn
 
 from app.config import settings
 
-# LLM — gọi OpenAI nếu OPENAI_API_KEY set, else mock
+# LLM — OpenAI gpt-4o-mini (bắt buộc OPENAI_API_KEY)
 from utils.llm import ask as llm_ask
 
 # ─────────────────────────────────────────────────────────
@@ -356,7 +356,7 @@ async def ask_agent(
         "client": str(request.client.host) if request.client else "unknown",
     }))
 
-    # Real LLM dùng history_before làm context; mock bỏ qua.
+    # Gọi LLM với conversation history làm context
     answer = llm_ask(body.question, history=history_before)
 
     append_history(body.user_id, "assistant", answer)
@@ -411,7 +411,7 @@ def health():
         "uptime_seconds": round(time.time() - START_TIME, 1),
         "total_requests": get_request_count(),
         "checks": {
-            "llm": "mock" if not settings.openai_api_key else "openai",
+            "llm": "openai" if settings.openai_api_key else "missing_key",
             "storage": "redis" if USE_REDIS else "in-memory",
             "redis_connected": redis_ok,
         },

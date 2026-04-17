@@ -1,12 +1,12 @@
 """
-LLM dispatch — gọi OpenAI nếu `OPENAI_API_KEY` set, fallback mock.
+LLM — OpenAI gpt-4o-mini với conversation history làm context.
 
-Real LLM dùng conversation history làm context để multi-turn có ý nghĩa.
+Service bắt buộc có `OPENAI_API_KEY` trong env. Không fallback mock.
 """
 import os
 import logging
 
-from .mock_llm import ask as _mock_ask
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -15,30 +15,33 @@ _SYSTEM_PROMPT = (
     "Trả lời ngắn gọn, bằng tiếng Việt nếu user hỏi bằng tiếng Việt."
 )
 
+_client: OpenAI | None = None
+
+
+def _get_client() -> OpenAI:
+    """Lazy singleton client — raise rõ ràng nếu thiếu env."""
+    global _client
+    if _client is None:
+        api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+        if not api_key:
+            raise RuntimeError(
+                "OPENAI_API_KEY is required. Set it in Railway variables or .env."
+            )
+        _client = OpenAI(api_key=api_key)
+    return _client
+
 
 def ask(question: str, history: list[dict] | None = None) -> str:
     """
-    Gọi LLM.
+    Gọi OpenAI chat completions.
 
     - `question`: câu hỏi user vừa gửi
-    - `history`: list[{role, content, ts}] — các turn trước trong session này.
-      Mock bỏ qua. Real LLM dùng để giữ ngữ cảnh multi-turn.
+    - `history`: list[{role, content, ts}] — turn trước, dùng làm context multi-turn
 
-    Return: string trả lời.
+    Return: string trả lời từ gpt-4o-mini.
     """
-    api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    if not api_key:
-        return _mock_ask(question)
-
-    try:
-        from openai import OpenAI
-    except ImportError:
-        logger.warning("openai SDK not installed — falling back to mock")
-        return _mock_ask(question)
-
     messages: list[dict] = [{"role": "system", "content": _SYSTEM_PROMPT}]
     if history:
-        # Chỉ lấy role + content; bỏ timestamp
         for h in history:
             role = h.get("role")
             content = h.get("content", "")
@@ -46,15 +49,10 @@ def ask(question: str, history: list[dict] | None = None) -> str:
                 messages.append({"role": role, "content": content})
     messages.append({"role": "user", "content": question})
 
-    try:
-        client = OpenAI(api_key=api_key)
-        resp = client.chat.completions.create(
-            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
-            messages=messages,
-            max_tokens=int(os.getenv("MAX_TOKENS", "500")),
-            temperature=0.7,
-        )
-        return (resp.choices[0].message.content or "").strip()
-    except Exception as exc:
-        logger.warning("OpenAI call failed (%s) — falling back to mock", exc)
-        return _mock_ask(question)
+    resp = _get_client().chat.completions.create(
+        model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
+        messages=messages,
+        max_tokens=int(os.getenv("MAX_TOKENS", "500")),
+        temperature=0.7,
+    )
+    return (resp.choices[0].message.content or "").strip()

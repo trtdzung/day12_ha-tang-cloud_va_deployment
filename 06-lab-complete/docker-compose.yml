@@ -12,6 +12,9 @@ services:
       - RATE_LIMIT_PER_MINUTE=${RATE_LIMIT_PER_MINUTE:-20}
       - DAILY_BUDGET_USD=${DAILY_BUDGET_USD:-5.0}
       - EXPOSE_DOCS=${EXPOSE_DOCS:-true}
+      - OPENAI_API_KEY=${OPENAI_API_KEY?OPENAI_API_KEY must be set}
+      - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
+      - MAX_TOKENS=${MAX_TOKENS:-500}
     env_file:
       - path: .env.local
         required: false
