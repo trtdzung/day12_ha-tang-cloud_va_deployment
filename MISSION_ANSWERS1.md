@@ -1,5 +1,9 @@
-# Day 12 Lab — Mission Answers
+# Day 12 Lab — Mission Answers (1)
 
+> **Project:** `06-lab-complete/` — Python/FastAPI sample
+> **Deployment doc:** [`DEPLOYMENT1.md`](./DEPLOYMENT1.md)
+> **Live URL:** https://day12-agent-production-a0dc.up.railway.app
+>
 > **Student:** Ngô Hải Văn
 > **Student ID:** 2A202600386
 > **Date:** 2026-04-17
@@ -87,12 +91,14 @@ Services communicate qua Docker internal network dùng service name làm DNS (`r
 
 ## Part 3: Cloud Deployment
 
-### Exercise 3.1: Railway deployment
+### Exercise 3.1: Railway deployment (LIVE)
 
-Deploy Lab 06 lên Railway. (Vì deadline gấp và chọn phương án **VPS + GitHub Actions** cho bài sau, URL dưới là ví dụ format.)
+Sample `06-lab-complete/` deployed thành công lên Railway:
 
-- **URL:** `https://day12-agent-production.up.railway.app` *(sẽ cập nhật trong `DEPLOYMENT.md`)*
-- **Screenshots:** `screenshots/railway-dashboard.png`, `screenshots/deployment-live.png`
+- **URL:** https://day12-agent-production-a0dc.up.railway.app
+- **Swagger docs:** https://day12-agent-production-a0dc.up.railway.app/docs
+- **Redis:** Railway-managed add-on, linked qua `REDIS_URL=${{Redis.REDIS_URL}}`
+- **CI/CD:** `.github/workflows/deploy-railway.yml` — push `main` → auto deploy (~1m24s)
 
 **Env vars set trên Railway:**
 ```
@@ -101,18 +107,22 @@ AGENT_API_KEY             <random 32 bytes hex>
 JWT_SECRET                <random 32 bytes hex>
 ENVIRONMENT               production
 DAILY_BUDGET_USD          10.0
-RATE_LIMIT_PER_MINUTE     10
+RATE_LIMIT_PER_MINUTE     20
+REDIS_URL                 ${{Redis.REDIS_URL}} (auto-injected)
 OPENAI_API_KEY            (optional — không set thì dùng mock LLM)
+EXPOSE_DOCS               true
 ```
 
-Test:
+**Test live:**
 ```bash
-curl https://<domain>/health
-# → {"status":"ok","version":"1.0.0","environment":"production",...}
+BASE=https://day12-agent-production-a0dc.up.railway.app
 
-curl -H "X-API-Key: $KEY" -X POST https://<domain>/ask \
+curl $BASE/health
+# → {"status":"ok","storage":"redis","redis_connected":true,...}
+
+curl -H "X-API-Key: $KEY" -X POST $BASE/ask \
   -H "Content-Type: application/json" \
-  -d '{"question":"What is Docker?"}'
+  -d '{"question":"What is Docker?","user_id":"alice"}'
 ```
 
 ### Exercise 3.2: Render vs Railway
@@ -353,22 +363,31 @@ Kết quả: ✅ Conversation persistent khi instance chết, chứng minh state
 
 ---
 
-## Part 6: Final Project
+## Part 6: Final Project (Python sample)
 
-Xem source code trong `06-lab-complete/`.
+Source: [`06-lab-complete/`](./06-lab-complete)
 
 **Self-check kết quả:**
-```
-Result: 20/20 checks passed (100%)
-🎉 PRODUCTION READY! Deploy nào!
+```bash
+cd 06-lab-complete && python3 check_production_ready.py
+# → Result: 20/20 checks passed (100%) 🎉 PRODUCTION READY!
 ```
 
 Đã pass:
-- ✅ Dockerfile multi-stage, non-root user, HEALTHCHECK, slim base
+- ✅ Dockerfile multi-stage (272 MB), non-root, `HEALTHCHECK`, slim base
 - ✅ `.dockerignore` cover `.env` + `__pycache__`
 - ✅ `.env` in `.gitignore`, không hardcode secret
-- ✅ `/health` + `/ready` endpoints
-- ✅ API key auth, rate limiting, graceful SIGTERM
+- ✅ `/health` + `/ready` endpoints (readiness check Redis connection)
+- ✅ API key auth (`X-API-Key`), JWT flow (`/auth/token`)
+- ✅ Rate limit — **Redis sorted set**, sliding window 20 req/min/user (consistent qua nhiều instances)
+- ✅ Cost guard — **Redis INCRBYFLOAT** với daily TTL
+- ✅ Conversation history — **Redis list**, TTL 24h, giữ 20 msg gần nhất
+- ✅ Graceful SIGTERM + `timeout_graceful_shutdown=30s`
 - ✅ Structured JSON logging
+- ✅ `railway.toml` + `render.yaml` deploy configs
 
-Chi tiết deploy xem `DEPLOYMENT.md`.
+**Live:** https://day12-agent-production-a0dc.up.railway.app (push `main` → auto redeploy).
+
+Chi tiết deploy xem [`DEPLOYMENT1.md`](./DEPLOYMENT1.md).
+
+Dự án chính (Vinmec AI Agent trên VPS) xem [`MISSION_ANSWERS2.md`](./MISSION_ANSWERS2.md) + [`DEPLOYMENT2.md`](./DEPLOYMENT2.md).

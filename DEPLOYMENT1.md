@@ -12,9 +12,7 @@ tuân thủ đầy đủ 11 items trong production readiness checklist.
 ## Tổng quan
 
 Agent FastAPI đơn giản dùng **mock LLM** (không cần OpenAI API key), chạy
-standalone bằng `docker compose up`. Dùng làm **reference** để đối chiếu với
-dự án chính (Vinmec — xem `DEPLOYMENT2.md`).
-
+standalone bằng `docker compose up`. 
 **Stack:**
 - Python 3.11 + FastAPI + uvicorn
 - **Redis-backed state** (sliding-window rate limit, INCRBYFLOAT cost guard, conversation history per user)
