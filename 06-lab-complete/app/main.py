@@ -32,8 +32,8 @@ import uvicorn
 
 from app.config import settings
 
-# Mock LLM (thay bằng OpenAI/Anthropic khi có API key)
-from utils.mock_llm import ask as llm_ask
+# LLM — gọi OpenAI nếu OPENAI_API_KEY set, else mock
+from utils.llm import ask as llm_ask
 
 # ─────────────────────────────────────────────────────────
 # Logging — JSON structured
@@ -356,8 +356,8 @@ async def ask_agent(
         "client": str(request.client.host) if request.client else "unknown",
     }))
 
-    # Mock LLM không dùng history, nhưng real LLM sẽ concat history_before + body.question
-    answer = llm_ask(body.question)
+    # Real LLM dùng history_before làm context; mock bỏ qua.
+    answer = llm_ask(body.question, history=history_before)
 
     append_history(body.user_id, "assistant", answer)
     output_tokens = len(answer.split()) * 2
